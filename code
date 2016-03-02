@@ -1,0 +1,105 @@
+public with sharing class LinkedInControllerTest {
+    //Props 
+    public String code{get;set;}  
+    public String firstName{get;set;}
+    public boolean showGreet{get;set;}
+    public boolean showButton{get;set;}
+    
+    //ivars and constants
+    
+    private String accessToken;
+    private static final String stateKey = '12345';
+    private static final String apiKey = '78r5gw0tg3ah81'; // client_id
+    private static final String redirectUri = 'https://vprok-developer-edition.na15.force.com/MyCommunity/LinkedIntestPage';
+    private static final String secret = 'bMlzOyYP1tpCkjPT'; // client_secret
+      
+    public LinkedInControllerTest(){
+     showGreet = false;
+     showButton = true;
+        String state = ApexPages.currentPage().getParameters().get('state') ;
+        try{
+        if(state.equals(stateKey)){
+         code = ApexPages.currentPage().getParameters().get('code') ; 
+        }}catch(Exception E){}
+          
+        if(code != '' && code != null)  
+        {  
+            GetAccessToken() ;  
+        }  
+        if(AccessToken != null){
+         CreateGreetMessage();
+        }
+    }  
+      
+    public PageReference LinkedInAuth(){   
+  PageReference pr = new PageReference('https://www.linkedin.com/uas/oauth2/authorization?response_type=code&client_id='+apiKey+'&redirect_uri='+redirectUri+'&state='+stateKey);          
+        return pr ;  
+    }
+      
+    public void GetAccessToken(){  
+  
+    HttpRequest req = new HttpRequest();
+    HttpResponse res = new HttpResponse();
+    Http http = new Http();
+
+    req.setEndpoint('https://www.linkedin.com/uas/oauth2/accessToken');
+    req.setMethod('POST');
+    req.setBody('grant_type='+'authorization_code'+'&code='+code+'&redirect_uri='+redirectUri+'&client_id='+apiKey+'&client_secret='+secret);
+    req.setCompressed(false); 
+ req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+    try {
+        res = http.send(req);
+    } catch(System.CalloutException e) {
+        system.debug('Callout error: '+ e);
+        system.debug(res.toString());
+    }
+    
+    JSONParser parser = JSON.createParser(res.getBody());
+    while (parser.nextToken() != null) {
+        if ((parser.getCurrentToken() == JSONToken.FIELD_NAME) && (parser.getText() == 'access_token')) {
+            // Get the value.
+            parser.nextToken();
+            // Compute the grand total price for all invoices.
+            accessToken = parser.getText();
+     }
+    }    
+    system.debug('accessToken =  ' + accessToken);       
+   }
+   
+   public void CreateGreetMessage(){
+ 
+    HttpRequest req = new HttpRequest();
+    HttpResponse res = new HttpResponse();
+    Http http = new Http();
+
+    // ****** test "apply" functionallity WORKS GOOD
+    //req.setEndpoint('https://api.linkedin.com/v1/people/~:(id,first-name,skills,educations,languages,twitter-accounts)?format=json');
+    
+    //*********** test "sign in" func
+    req.setEndpoint('https://api.linkedin.com/v1/people/~:(id,first-name,last-name,headline,location,industry,current-share,summary,specialties,positions,num-connections,picture-url)?format=json');
+
+    req.setMethod('GET');
+  req.setCompressed(true); 
+ req.setHeader('Authorization', 'Bearer ' + accessToken);
+    try {
+        res = http.send(req);
+        system.debug('Response body = ' + res.getBody());
+    } catch(System.CalloutException e) {
+        System.debug('Callout error: '+ e);
+        System.debug(res.toString());
+    }
+
+    JSONParser parser = JSON.createParser(res.getBody());
+    while (parser.nextToken() != null) {
+        if ((parser.getCurrentToken() == JSONToken.FIELD_NAME) && (parser.getText() == 'firstName')) {
+            // Get the value.
+            parser.nextToken();
+            // Compute the grand total price for all invoices.
+            firstName = parser.getText();
+            showGreet = true;
+            showButton = false;
+     }
+    }
+   }
+   
+}
