@@ -58,3 +58,8 @@ Redirect URI is basically the page user will be redirected after accepting the d
 private static final String secret = ' bMlzOyYP1tpCkjPT'; // client_secret
 
 
+Basically, the code just creates a new page reference with the link containing all the necessary information , than the user is redirected to this link and if the user presses "Allow", the browser is redirected back to the starting page, but the code parameter is appended as a parameter.
+
+If the code and state parameters are alright - GetAccessToken() method fires and after the access token is acquired the CreateGreetMessage() method fires , which basically makes a call to LinkedIn API to get some user data. In my case it just takes FirstName to create a message on the page. So after whole process the user will get something like "Thank you, {!FirstName}"
+
+That's all! This template could be used to make further enhancements, for example creating a contact after authorization or whatever you will need.
